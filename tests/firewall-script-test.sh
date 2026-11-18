@@ -9,7 +9,11 @@ MOCK_STATE="${TEST_DIR}/mock-state"
 LAB_STATE="${TEST_DIR}/lab-state"
 
 cleanup() {
-  rm -rf "${TEST_DIR}"
+  if [[ "${EUID}" -eq 0 ]]; then
+    rm -rf "${TEST_DIR}"
+  else
+    sudo rm -rf "${TEST_DIR}"
+  fi
 }
 trap cleanup EXIT
 
