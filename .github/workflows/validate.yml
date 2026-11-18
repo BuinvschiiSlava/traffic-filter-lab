@@ -1,0 +1,45 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare example environment
+        run: cp .env.example .env
+
+      - name: Validate Compose model
+        run: docker compose --env-file .env config --quiet
+
+      - name: Validate shell scripts
+        run: |
+          bash -n scripts/*.sh tests/*.sh
+          shellcheck -x scripts/*.sh tests/*.sh
+
+      - name: Start lab
+        run: docker compose --env-file .env up -d --wait
+
+      - name: Verify services and segmentation
+        run: |
+          ./scripts/verify-services.sh
+          ./scripts/verify-segmentation.sh
+
+      - name: Verify firewall scripts safely
+        run: ./tests/firewall-script-test.sh
+
+      - name: Check repository for accidental state files
+        run: |
+          test ! -e .state
+          test ! -e .env || cmp --silent .env .env.example
+
+      - name: Stop lab
+        if: always()
+        run: docker compose --env-file .env down --volumes

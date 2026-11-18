@@ -1,0 +1,7 @@
+.env
+.state/
+*.log
+*.save
+.idea/
+.vscode/
+.DS_Store
